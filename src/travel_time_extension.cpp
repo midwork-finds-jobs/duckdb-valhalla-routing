@@ -1,6 +1,6 @@
 #define DUCKDB_EXTENSION_MAIN
 
-#include "travel_time_extension.hpp"
+#include "valhalla_routing_extension.hpp"
 #include "duckdb.hpp"
 #include "duckdb/common/exception.hpp"
 #include "duckdb/function/scalar_function.hpp"
@@ -941,17 +941,17 @@ static void LoadInternal(ExtensionLoader &loader) {
 	RegisterValhallaBuildTilesFunction(loader);
 }
 
-void TravelTimeExtension::Load(ExtensionLoader &loader) {
+void ValhallaRoutingExtension::Load(ExtensionLoader &loader) {
 	LoadInternal(loader);
 }
 
-std::string TravelTimeExtension::Name() {
-	return "travel_time";
+std::string ValhallaRoutingExtension::Name() {
+	return "valhalla_routing";
 }
 
-std::string TravelTimeExtension::Version() const {
-#ifdef EXT_VERSION_TRAVEL_TIME
-	return EXT_VERSION_TRAVEL_TIME;
+std::string ValhallaRoutingExtension::Version() const {
+#ifdef EXT_VERSION_VALHALLA_ROUTING
+	return EXT_VERSION_VALHALLA_ROUTING;
 #else
 	return "";
 #endif
@@ -961,7 +961,7 @@ std::string TravelTimeExtension::Version() const {
 
 extern "C" {
 
-DUCKDB_CPP_EXTENSION_ENTRY(travel_time, loader) {
+DUCKDB_CPP_EXTENSION_ENTRY(valhalla_routing, loader) {
 	duckdb::LoadInternal(loader);
 }
 }
