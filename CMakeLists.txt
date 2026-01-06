@@ -15,6 +15,11 @@ set(EXTENSION_SOURCES
     src/valhalla_build_tiles_simple.cpp
 )
 
+# Stub sources for when Valhalla wrapper is not available
+set(STUB_SOURCES
+    src/valhalla_stub.cpp
+)
+
 # Path to Valhalla wrapper
 set(VALHALLA_WRAPPER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/valhalla-wrapper")
 set(VALHALLA_WRAPPER_INCLUDE "${VALHALLA_WRAPPER_DIR}/include")
@@ -37,11 +42,12 @@ endif()
 
 if(VALHALLA_WRAPPER_LIB)
     message(STATUS "Found Valhalla wrapper: ${VALHALLA_WRAPPER_LIB}")
+    set(USE_VALHALLA_WRAPPER TRUE)
 else()
-    message(WARNING "Valhalla wrapper library not found. Build it first:
-        cd valhalla-wrapper && mkdir build && cd build
-        cmake -DCMAKE_BUILD_TYPE=Release ..
-        make")
+    message(STATUS "Valhalla wrapper not found - using stub implementations")
+    set(USE_VALHALLA_WRAPPER FALSE)
+    # Add stub sources to extension
+    list(APPEND EXTENSION_SOURCES ${STUB_SOURCES})
 endif()
 
 # Include the wrapper header
@@ -113,8 +119,8 @@ if(VALHALLA_FOUND)
     set_target_properties(${LOADABLE_EXTENSION_NAME} PROPERTIES CXX_STANDARD 17)
 endif()
 
-# Link the Valhalla wrapper library
-if(VALHALLA_WRAPPER_LIB)
+# Link the Valhalla wrapper library (only if available)
+if(USE_VALHALLA_WRAPPER)
     target_link_libraries(${EXTENSION_NAME} ${VALHALLA_WRAPPER_LIB})
     target_link_libraries(${LOADABLE_EXTENSION_NAME} ${VALHALLA_WRAPPER_LIB})
 endif()
