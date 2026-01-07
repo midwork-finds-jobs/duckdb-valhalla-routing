@@ -906,7 +906,7 @@ static void LoadInternal(ExtensionLoader &loader) {
 	// Returns WKB BLOB geometry (use travel_time_route for automatic GEOMETRY conversion)
 	// Works with: VARCHAR (WKT), BLOB (WKB), GEOMETRY (spatial extension)
 	auto route_function =
-	    ScalarFunction("travel_time_route_wkb", {LogicalType::ANY, LogicalType::ANY, LogicalType::VARCHAR},
+	    ScalarFunction("valhalla_route_wkb", {LogicalType::ANY, LogicalType::ANY, LogicalType::VARCHAR},
 	                   route_return_type, TravelTimeRouteUnifiedFun);
 	loader.RegisterFunction(route_function);
 
