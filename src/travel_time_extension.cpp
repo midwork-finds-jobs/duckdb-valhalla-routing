@@ -51,8 +51,8 @@ static bool IsGeometryType(const LogicalType &type) {
 			return true;
 		}
 	}
-	// Check if it's an extension type with GEOMETRY-like name
-	if (type.id() == LogicalTypeId::USER) {
+	// Check if it's an unbound type with GEOMETRY-like name
+	if (type.id() == LogicalTypeId::UNBOUND) {
 		auto type_name = type.ToString();
 		if (type_name == "GEOMETRY" || type_name == "geometry" || type_name == "WKB_BLOB" || type_name == "wkb_blob") {
 			return true;
@@ -337,7 +337,7 @@ static bool ExtractGeometryData(Vector &vec, idx_t row, const LogicalType &type,
 	}
 
 	// Extension types (like GEOMETRY) - try to read as blob-like data
-	if (type.id() == LogicalTypeId::USER || type.id() == LogicalTypeId::STRUCT) {
+	if (type.HasAlias() || type.id() == LogicalTypeId::STRUCT) {
 		if (type.InternalType() == PhysicalType::VARCHAR) {
 			string_t val = FlatVector::GetData<string_t>(vec)[row];
 			const char *raw_data = val.GetData();
