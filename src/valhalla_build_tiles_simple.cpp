@@ -243,7 +243,7 @@ void RegisterValhallaBuildTilesFunction(ExtensionLoader &loader) {
 	                           LogicalType::VARCHAR,                         // Returns config path
 	                           ValhallaBuildTilesFun);
 
-	build_tiles.null_handling = FunctionNullHandling::SPECIAL_HANDLING;
+	build_tiles.SetNullHandling(FunctionNullHandling::SPECIAL_HANDLING);
 
 	loader.RegisterFunction(build_tiles);
 }
