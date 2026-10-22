@@ -27,3 +27,10 @@ italy_tiles/
 valhalla_data/
 **/valhalla.json
 **/build.log
+
+# Rust build output
+rust/target/
+
+# Stray shell state
+/~/
+.cache/

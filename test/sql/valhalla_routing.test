@@ -1,0 +1,114 @@
+# name: test/sql/valhalla_routing.test
+# description: valhalla_routing function registration and offline behaviour (no tiles needed)
+# group: [sql]
+
+# Before we load the extension, this will fail
+statement error
+SELECT travel_time_load_config('./valhalla.json');
+----
+Catalog Error: Scalar Function with name travel_time_load_config does not exist!
+
+require valhalla_routing
+
+# All functions are registered
+query I
+SELECT list_sort(list(DISTINCT function_name)) FROM duckdb_functions()
+WHERE function_name LIKE 'travel\_time%' ESCAPE '\' OR function_name LIKE 'valhalla\_%' ESCAPE '\';
+----
+[travel_time, travel_time_is_loaded, travel_time_load_config, travel_time_locate, travel_time_matrix, travel_time_request, valhalla_build_tiles, valhalla_route_wkb]
+
+# No router loaded initially
+query I
+SELECT travel_time_is_loaded();
+----
+false
+
+# Routing without a loaded router errors
+statement error
+SELECT travel_time(43.7396, 7.4281, 43.7312, 7.4197, 'auto');
+----
+Valhalla router not loaded
+
+statement error
+SELECT valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto');
+----
+Valhalla router not loaded
+
+statement error
+SELECT travel_time_locate(43.7396, 7.4281, 'auto');
+----
+Valhalla router not loaded
+
+statement error
+SELECT travel_time_request('route', '{}');
+----
+Valhalla router not loaded
+
+statement error
+SELECT * FROM travel_time_matrix([43.7396], [7.4281], [43.7312], [7.4197], 'auto');
+----
+Valhalla router not loaded
+
+statement error
+SELECT * FROM travel_time_matrix([43.7396, 1.0], [7.4281], [43.7312], [7.4197], 'auto');
+----
+Source lat/lon arrays must have same length
+
+# Missing config files
+statement error
+SELECT travel_time_load_config('/nonexistent/valhalla.json');
+----
+Failed to load Valhalla config: /nonexistent/valhalla.json
+
+statement error
+SET valhalla_tiles = '/nonexistent/tiles';
+----
+Config file not found: /nonexistent/tiles/valhalla.json
+
+query I
+SELECT travel_time_is_loaded();
+----
+false
+
+# NULL in -> NULL out (no router needed)
+query I
+SELECT travel_time(NULL, 7.4281, 43.7312, 7.4197, 'auto');
+----
+NULL
+
+query I
+SELECT travel_time_load_config(NULL);
+----
+NULL
+
+query I
+SELECT valhalla_route_wkb(NULL, 'POINT(7.4197 43.7312)', 'auto') IS NULL;
+----
+true
+
+query I
+SELECT travel_time_locate(NULL, 7.4281, 'auto') IS NULL;
+----
+true
+
+query I
+SELECT travel_time_request(NULL, '{}');
+----
+NULL
+
+query I
+SELECT valhalla_build_tiles(NULL, '{TEST_DIR}/tiles');
+----
+NULL
+
+# Multi-row input with NULLs
+query I
+SELECT count(*) FROM (SELECT travel_time(lat, 7.4281, 43.7312, 7.4197, 'auto') AS t FROM (VALUES (NULL::DOUBLE), (NULL::DOUBLE)) v(lat)) WHERE t IS NULL;
+----
+2
+
+# Tile building fails cleanly (stub build: Valhalla not available; real build: missing input)
+statement error
+SELECT valhalla_build_tiles('{TEST_DIR}/missing.osm.pbf', '{TEST_DIR}/tiles');
+----
+valhalla_build_tiles failed
