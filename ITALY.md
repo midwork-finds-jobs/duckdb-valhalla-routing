@@ -72,7 +72,7 @@ SELECT
     round(r.duration_minutes / 60.0, 1) as hours,
     ST_GeomFromWKB(r.geometry) as route
 FROM (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(12.4964, 41.9028),  -- Rome (Colosseum)
         ST_Point(11.2558, 43.7696),  -- Florence (Duomo)
         'auto'
@@ -111,7 +111,7 @@ SELECT
     round(r.duration_minutes / 60.0, 1) as hours
 FROM italian_cities c
 CROSS JOIN LATERAL (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         (SELECT location FROM italian_cities WHERE city = 'Rome'),
         c.location,
         'auto'
@@ -151,7 +151,7 @@ SELECT travel_time_load_config('./italy_tiles/valhalla.json');
 
 -- Rome to Florence with automatic GEOMETRY conversion
 WITH route AS (
-    SELECT travel_time_route_geom(
+    SELECT valhalla_route(
         ST_Point(12.4964, 41.9028),  -- Rome
         ST_Point(11.2558, 43.7696),  -- Florence
         'auto'
@@ -221,13 +221,13 @@ SELECT
     round(r.duration_minutes / 60.0, 1) as hours
 FROM (
     SELECT 'Car' as mode,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto') as r
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto') as r
     UNION ALL
     SELECT 'Truck',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'truck')
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'truck')
     UNION ALL
     SELECT 'Bicycle',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'bicycle')
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'bicycle')
 );
 ```
 
@@ -255,7 +255,7 @@ SELECT travel_time_load_config('./italy_tiles/valhalla.json');
 
 -- Analyze route from Rome to Milan
 WITH route AS (
-    SELECT travel_time_route_geom(
+    SELECT valhalla_route(
         ST_Point(12.4964, 41.9028),  -- Rome
         ST_Point(9.1900, 45.4642),   -- Milan
         'auto'
@@ -283,14 +283,14 @@ SELECT travel_time_load_config('./italy_tiles/valhalla.json');
 
 -- Rome → Florence → Venice (two-leg journey)
 WITH leg1 AS (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(12.4964, 41.9028),  -- Rome
         ST_Point(11.2558, 43.7696),  -- Florence
         'auto'
     ) as r
 ),
 leg2 AS (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(11.2558, 43.7696),  -- Florence
         ST_Point(12.3155, 45.4408),  -- Venice
         'auto'
@@ -323,7 +323,7 @@ COPY (
         ('Florence', ST_Point(11.2558, 43.7696))
     ) AS c(city, location)
     CROSS JOIN LATERAL (
-        SELECT travel_time_route(
+        SELECT valhalla_route(
             ST_Point(12.4964, 41.9028),  -- Rome
             c.location,
             'auto'

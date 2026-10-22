@@ -18,12 +18,12 @@ SET valhalla_config = 'http://localhost:8080/valhalla.json';
 
 -- Load geometry macro
 SELECT '2. Loading geometry macro...' as step;
-CREATE OR REPLACE MACRO travel_time_route(from_geom, to_geom, costing) AS (
+CREATE OR REPLACE MACRO valhalla_route(from_geom, to_geom, costing) AS (
     SELECT struct_pack(
         distance_km := r.distance_km,
         duration_minutes := r.duration_minutes,
         geometry := ST_GeomFromWKB(r.geometry)
-    ) FROM (SELECT travel_time_route_wkb(from_geom, to_geom, costing) as r)
+    ) FROM (SELECT valhalla_route_wkb(from_geom, to_geom, costing) as r)
 );
 
 SELECT '' as separator;
@@ -31,7 +31,7 @@ SELECT '' as separator;
 -- Example 1: Single route
 SELECT '=== Example 1: Rome to Florence ===' as example;
 WITH route AS (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(12.4964, 41.9028),  -- Rome
         ST_Point(11.2558, 43.7696),  -- Florence
         'auto'
@@ -54,13 +54,13 @@ SELECT
     round(r.duration_minutes / 60.0, 1) as hours
 FROM (
     SELECT 'Naples' as city,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(14.2681, 40.8518), 'auto') as r
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(14.2681, 40.8518), 'auto') as r
     UNION ALL
     SELECT 'Florence',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto')
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto')
     UNION ALL
     SELECT 'Milan',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(9.1900, 45.4642), 'auto')
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(9.1900, 45.4642), 'auto')
 )
 ORDER BY km;
 
@@ -74,10 +74,10 @@ SELECT
     round(r.duration_minutes / 60.0, 1) as hours
 FROM (
     SELECT 'Car' as mode,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto') as r
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto') as r
     UNION ALL
     SELECT 'Bicycle',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'bicycle')
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'bicycle')
 )
 ORDER BY hours;
 

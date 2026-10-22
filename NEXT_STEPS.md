@@ -6,7 +6,7 @@
 
 - ✅ Travel time routing extension with Valhalla
 - ✅ GEOMETRY type support (WKB format)
-- ✅ Function hierarchy: `travel_time_route` (macro) → `travel_time_route_wkb` (C++)
+- ✅ Function hierarchy: `valhalla_route` (macro) → `valhalla_route_wkb` (C++)
 - ✅ Multi-mode routing (auto, bicycle, pedestrian, truck, etc.)
 - ✅ Matrix queries and location snapping
 
@@ -54,7 +54,7 @@ gh release create v0.1.0 \
   --notes-file RELEASE_NOTES_v0.1.0.md
 
 # Option B: Using GitHub Web UI
-# 1. Go to https://github.com/onnimonni/duckdb-routing/releases/new
+# 1. Go to https://github.com/midwork-finds-jobs/duckdb-valhalla-routing/releases/new
 # 2. Select tag: v0.1.0
 # 3. Title: Release v0.1.0 - DuckDB Valhalla Routing Extension
 # 4. Copy/paste content from RELEASE_NOTES_v0.1.0.md
@@ -98,7 +98,7 @@ Features:
 - N×M travel time matrices
 - Works with OpenStreetMap data
 
-Repo: https://github.com/onnimonni/duckdb-routing
+Repo: https://github.com/midwork-finds-jobs/duckdb-valhalla-routing
 "
 
 git push origin add-valhalla-routing
@@ -119,7 +119,7 @@ DuckDB extension for travel time and route calculations using Valhalla routing e
 - Direct integration with DuckDB spatial extension
 
 ### Repository
-https://github.com/onnimonni/duckdb-routing
+https://github.com/midwork-finds-jobs/duckdb-valhalla-routing
 
 ### Documentation
 - README.md with quick start and API reference
@@ -161,7 +161,7 @@ Use this template for the PR description:
 DuckDB extension for travel time and route calculations using Valhalla routing engine.
 
 ### Repository
-https://github.com/onnimonni/duckdb-routing
+https://github.com/midwork-finds-jobs/duckdb-valhalla-routing
 
 ### Description
 Point-to-point routing with distance, duration, and route geometry using the Valhalla open-source routing engine. Supports multiple travel modes and works seamlessly with DuckDB spatial extension.
@@ -174,9 +174,9 @@ Point-to-point routing with distance, duration, and route geometry using the Val
 - OpenStreetMap data support
 
 ### Documentation
-- [README.md](https://github.com/onnimonni/duckdb-routing/blob/main/README.md)
-- [ITALY.md](https://github.com/onnimonni/duckdb-routing/blob/main/ITALY.md)
-- [Examples](https://github.com/onnimonni/duckdb-routing/tree/main/examples)
+- [README.md](https://github.com/midwork-finds-jobs/duckdb-valhalla-routing/blob/main/README.md)
+- [ITALY.md](https://github.com/midwork-finds-jobs/duckdb-valhalla-routing/blob/main/ITALY.md)
+- [Examples](https://github.com/midwork-finds-jobs/duckdb-valhalla-routing/tree/main/examples)
 
 ### Testing
 30+ comprehensive test cases covering:

@@ -5,6 +5,7 @@
 #include "duckdb/common/exception.hpp"
 #include "duckdb/function/scalar_function.hpp"
 #include "duckdb/function/table_function.hpp"
+#include "duckdb/common/vector/struct_vector.hpp"
 #include "duckdb/parser/parsed_data/create_scalar_function_info.hpp"
 
 // Valhalla wrapper C API
@@ -51,8 +52,8 @@ static bool IsGeometryType(const LogicalType &type) {
 			return true;
 		}
 	}
-	// Check if it's an extension type with GEOMETRY-like name
-	if (type.id() == LogicalTypeId::USER) {
+	// Check if it's an unbound type with GEOMETRY-like name
+	if (type.id() == LogicalTypeId::UNBOUND) {
 		auto type_name = type.ToString();
 		if (type_name == "GEOMETRY" || type_name == "geometry" || type_name == "WKB_BLOB" || type_name == "wkb_blob") {
 			return true;
@@ -337,7 +338,7 @@ static bool ExtractGeometryData(Vector &vec, idx_t row, const LogicalType &type,
 	}
 
 	// Extension types (like GEOMETRY) - try to read as blob-like data
-	if (type.id() == LogicalTypeId::USER || type.id() == LogicalTypeId::STRUCT) {
+	if (type.HasAlias() || type.id() == LogicalTypeId::STRUCT) {
 		if (type.InternalType() == PhysicalType::VARCHAR) {
 			string_t val = FlatVector::GetData<string_t>(vec)[row];
 			const char *raw_data = val.GetData();
@@ -461,7 +462,7 @@ static void TravelTimeLoadConfigFun(DataChunk &args, ExpressionState &state, Vec
 			g_config_path = path_str;
 		}
 
-		FlatVector::GetData<bool>(result)[i] = true;
+		FlatVector::GetDataMutable<bool>(result)[i] = true;
 	}
 }
 
@@ -473,7 +474,7 @@ static void TravelTimeIsLoadedFun(DataChunk &args, ExpressionState &state, Vecto
 	bool is_loaded = g_router && valhalla_is_ready((ValhallaRouter *)g_router);
 
 	for (idx_t i = 0; i < count; i++) {
-		FlatVector::GetData<bool>(result)[i] = is_loaded;
+		FlatVector::GetDataMutable<bool>(result)[i] = is_loaded;
 	}
 }
 
@@ -512,7 +513,7 @@ static void TravelTimeFun(DataChunk &args, ExpressionState &state, Vector &resul
 		if (num_points < 0) {
 			FlatVector::SetNull(result, i, true);
 		} else {
-			FlatVector::GetData<double>(result)[i] = route_result.duration_s;
+			FlatVector::GetDataMutable<double>(result)[i] = route_result.duration_s;
 		}
 	}
 }
@@ -525,8 +526,8 @@ static void TravelTimeRouteWktFun(DataChunk &args, ExpressionState &state, Vecto
 	idx_t count = args.size();
 
 	auto &struct_entries = StructVector::GetEntries(result);
-	auto dist_data = FlatVector::GetData<double>(*struct_entries[0]);
-	auto time_data = FlatVector::GetData<double>(*struct_entries[1]);
+	auto dist_data = FlatVector::GetDataMutable<double>(struct_entries[0]);
+	auto time_data = FlatVector::GetDataMutable<double>(struct_entries[1]);
 
 	constexpr int MAX_POINTS = 50000;
 	std::vector<ValhallaPoint> points(MAX_POINTS);
@@ -559,8 +560,8 @@ static void TravelTimeRouteWktFun(DataChunk &args, ExpressionState &state, Vecto
 		// Build WKB LINESTRING geometry
 		std::string wkb = BuildWkbLinestring(points.data(), num_points);
 
-		auto &geom_vec = *struct_entries[2];
-		FlatVector::GetData<string_t>(geom_vec)[i] = StringVector::AddStringOrBlob(geom_vec, wkb);
+		auto &geom_vec = struct_entries[2];
+		FlatVector::GetDataMutable<string_t>(geom_vec)[i] = StringVector::AddStringOrBlob(geom_vec, wkb);
 	}
 }
 
@@ -572,8 +573,8 @@ static void TravelTimeRouteWkbFun(DataChunk &args, ExpressionState &state, Vecto
 	idx_t count = args.size();
 
 	auto &struct_entries = StructVector::GetEntries(result);
-	auto dist_data = FlatVector::GetData<double>(*struct_entries[0]);
-	auto time_data = FlatVector::GetData<double>(*struct_entries[1]);
+	auto dist_data = FlatVector::GetDataMutable<double>(struct_entries[0]);
+	auto time_data = FlatVector::GetDataMutable<double>(struct_entries[1]);
 
 	constexpr int MAX_POINTS = 50000;
 	std::vector<ValhallaPoint> points(MAX_POINTS);
@@ -608,8 +609,8 @@ static void TravelTimeRouteWkbFun(DataChunk &args, ExpressionState &state, Vecto
 		// Build WKB LINESTRING geometry
 		std::string wkb = BuildWkbLinestring(points.data(), num_points);
 
-		auto &geom_vec = *struct_entries[2];
-		FlatVector::GetData<string_t>(geom_vec)[i] = StringVector::AddStringOrBlob(geom_vec, wkb);
+		auto &geom_vec = struct_entries[2];
+		FlatVector::GetDataMutable<string_t>(geom_vec)[i] = StringVector::AddStringOrBlob(geom_vec, wkb);
 	}
 }
 
@@ -625,8 +626,8 @@ static void TravelTimeRouteUnifiedFun(DataChunk &args, ExpressionState &state, V
 	auto to_type = to_vec.GetType();
 
 	auto &struct_entries = StructVector::GetEntries(result);
-	auto dist_data = FlatVector::GetData<double>(*struct_entries[0]);
-	auto time_data = FlatVector::GetData<double>(*struct_entries[1]);
+	auto dist_data = FlatVector::GetDataMutable<double>(struct_entries[0]);
+	auto time_data = FlatVector::GetDataMutable<double>(struct_entries[1]);
 
 	constexpr int MAX_POINTS = 50000;
 	std::vector<ValhallaPoint> points(MAX_POINTS);
@@ -683,8 +684,8 @@ static void TravelTimeRouteUnifiedFun(DataChunk &args, ExpressionState &state, V
 		// Build WKB LINESTRING geometry
 		std::string wkb = BuildWkbLinestring(points.data(), num_points);
 
-		auto &geom_vec = *struct_entries[2];
-		FlatVector::GetData<string_t>(geom_vec)[i] = StringVector::AddStringOrBlob(geom_vec, wkb);
+		auto &geom_vec = struct_entries[2];
+		FlatVector::GetDataMutable<string_t>(geom_vec)[i] = StringVector::AddStringOrBlob(geom_vec, wkb);
 	}
 }
 
@@ -696,8 +697,8 @@ static void TravelTimeLocateFun(DataChunk &args, ExpressionState &state, Vector 
 	idx_t count = args.size();
 
 	auto &struct_entries = StructVector::GetEntries(result);
-	auto lat_data = FlatVector::GetData<double>(*struct_entries[0]);
-	auto lon_data = FlatVector::GetData<double>(*struct_entries[1]);
+	auto lat_data = FlatVector::GetDataMutable<double>(struct_entries[0]);
+	auto lon_data = FlatVector::GetDataMutable<double>(struct_entries[1]);
 
 	for (idx_t i = 0; i < count; i++) {
 		if (FlatVector::IsNull(lat_vec, i) || FlatVector::IsNull(lon_vec, i) || FlatVector::IsNull(costing_vec, i)) {
@@ -750,7 +751,7 @@ static void TravelTimeRequestFun(DataChunk &args, ExpressionState &state, Vector
 		if (!response) {
 			FlatVector::SetNull(result, i, true);
 		} else {
-			FlatVector::GetData<string_t>(result)[i] = StringVector::AddString(result, response);
+			FlatVector::GetDataMutable<string_t>(result)[i] = StringVector::AddString(result, response);
 			valhalla_free_string(response);
 		}
 	}
@@ -776,7 +777,7 @@ struct MatrixGlobalState : public GlobalTableFunctionState {
 };
 
 static unique_ptr<FunctionData> MatrixBind(ClientContext &context, TableFunctionBindInput &input,
-                                           vector<LogicalType> &return_types, vector<string> &names) {
+                                           vector<LogicalType> &return_types, vector<Identifier> &names) {
 	auto bind_data = make_uniq<MatrixBindData>();
 
 	auto &src_lats_list = input.inputs[0];
@@ -855,10 +856,10 @@ static void MatrixFunction(ClientContext &context, TableFunctionInput &data, Dat
 	}
 
 	idx_t count = 0;
-	auto from_idx_data = FlatVector::GetData<int32_t>(output.data[0]);
-	auto to_idx_data = FlatVector::GetData<int32_t>(output.data[1]);
-	auto dist_data = FlatVector::GetData<double>(output.data[2]);
-	auto time_data = FlatVector::GetData<double>(output.data[3]);
+	auto from_idx_data = FlatVector::GetDataMutable<int32_t>(output.data[0]);
+	auto to_idx_data = FlatVector::GetDataMutable<int32_t>(output.data[1]);
+	auto dist_data = FlatVector::GetDataMutable<double>(output.data[2]);
+	auto time_data = FlatVector::GetDataMutable<double>(output.data[3]);
 
 	while (count < STANDARD_VECTOR_SIZE && state.current_idx < state.results.size()) {
 		auto &entry = state.results[state.current_idx];
@@ -882,10 +883,13 @@ static void LoadInternal(ExtensionLoader &loader) {
 	// travel_time_load_config
 	auto load_config_function = ScalarFunction("travel_time_load_config", {LogicalType::VARCHAR}, LogicalType::BOOLEAN,
 	                                           TravelTimeLoadConfigFun);
+	load_config_function.SetVolatile();
+	load_config_function.SetFallible();
 	loader.RegisterFunction(load_config_function);
 
 	// travel_time_is_loaded
 	auto is_loaded_function = ScalarFunction("travel_time_is_loaded", {}, LogicalType::BOOLEAN, TravelTimeIsLoadedFun);
+	is_loaded_function.SetVolatile();
 	loader.RegisterFunction(is_loaded_function);
 
 	// travel_time
@@ -893,6 +897,7 @@ static void LoadInternal(ExtensionLoader &loader) {
 	    "travel_time",
 	    {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::VARCHAR},
 	    LogicalType::DOUBLE, TravelTimeFun);
+	travel_time_function.SetFallible();
 	loader.RegisterFunction(travel_time_function);
 
 	// travel_time_route_wkb return type
@@ -908,6 +913,7 @@ static void LoadInternal(ExtensionLoader &loader) {
 	auto route_function =
 	    ScalarFunction("valhalla_route_wkb", {LogicalType::ANY, LogicalType::ANY, LogicalType::VARCHAR},
 	                   route_return_type, TravelTimeRouteUnifiedFun);
+	route_function.SetFallible();
 	loader.RegisterFunction(route_function);
 
 	// travel_time_locate
@@ -919,11 +925,13 @@ static void LoadInternal(ExtensionLoader &loader) {
 	auto locate_function =
 	    ScalarFunction("travel_time_locate", {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::VARCHAR},
 	                   locate_return_type, TravelTimeLocateFun);
+	locate_function.SetFallible();
 	loader.RegisterFunction(locate_function);
 
 	// travel_time_request (raw JSON API)
 	auto request_function = ScalarFunction("travel_time_request", {LogicalType::VARCHAR, LogicalType::VARCHAR},
 	                                       LogicalType::VARCHAR, TravelTimeRequestFun);
+	request_function.SetFallible();
 	loader.RegisterFunction(request_function);
 
 	// travel_time_matrix table function

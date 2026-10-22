@@ -1,14 +1,16 @@
 # name: test/sql/monaco_routing.test
-# description: test travel_time extension with Monaco routing data
+# description: test valhalla_routing extension with Monaco routing data
 # group: [sql]
 
-require travel_time
+require valhalla_routing
+
+require-env VALHALLA_TILES
 
 require spatial
 
 # Load Monaco tiles
 statement ok
-SELECT travel_time_load_config('./valhalla_data/valhalla.json');
+SELECT travel_time_load_config('${VALHALLA_TILES}/valhalla.json');
 
 # Test: Config loaded successfully
 query I
@@ -20,25 +22,25 @@ true
 # Casino: 7.4281, 43.7396
 # Palace: 7.4197, 43.7312
 query I
-SELECT travel_time_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').distance_km > 0;
+SELECT valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').distance_km > 0;
 ----
 true
 
 # Test: Duration is positive
 query I
-SELECT travel_time_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').duration_minutes > 0;
+SELECT valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').duration_minutes > 0;
 ----
 true
 
 # Test: GEOMETRY input with ST_Point
 query I
-SELECT travel_time_route_wkb(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').distance_km > 0;
+SELECT valhalla_route_wkb(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').distance_km > 0;
 ----
 true
 
 # Test: WKB BLOB input
 query I
-SELECT travel_time_route_wkb(
+SELECT valhalla_route_wkb(
     ST_AsWKB(ST_Point(7.4281, 43.7396)),
     ST_AsWKB(ST_Point(7.4197, 43.7312)),
     'auto'
@@ -48,14 +50,14 @@ true
 
 # Test: Geometry field is BLOB type
 query I
-SELECT typeof(travel_time_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').geometry);
+SELECT typeof(valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').geometry);
 ----
 BLOB
 
 # Test: Geometry can be converted to GEOMETRY type
 query I
 SELECT ST_GeomType(ST_GeomFromWKB(
-    travel_time_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').geometry
+    valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').geometry
 ));
 ----
 LINESTRING
@@ -63,27 +65,27 @@ LINESTRING
 # Test: Route has multiple waypoints
 query I
 SELECT ST_NPoints(ST_GeomFromWKB(
-    travel_time_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').geometry
+    valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').geometry
 )) > 10;
 ----
 true
 
 # Test: Different costing modes
 query I
-SELECT travel_time_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'bicycle').distance_km > 0;
+SELECT valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'bicycle').distance_km > 0;
 ----
 true
 
 query I
-SELECT travel_time_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'pedestrian').distance_km > 0;
+SELECT valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'pedestrian').distance_km > 0;
 ----
 true
 
 # Test: Bicycle is slower than auto
 query I
 SELECT
-    travel_time_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'bicycle').duration_minutes >
-    travel_time_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').duration_minutes;
+    valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'bicycle').duration_minutes >
+    valhalla_route_wkb('POINT(7.4281 43.7396)', 'POINT(7.4197 43.7312)', 'auto').duration_minutes;
 ----
 true
 
@@ -125,36 +127,36 @@ ORDER BY from_idx, to_idx;
 
 # Test: NULL handling - invalid coordinates should return NULL
 query I
-SELECT travel_time_route_wkb('POINT(0 0)', 'POINT(0 0)', 'auto') IS NULL;
+SELECT valhalla_route_wkb('POINT(0 0)', 'POINT(0 0)', 'auto') IS NULL;
 ----
 true
 
-# Test: travel_time_route macro (requires geometry_macro.sql)
+# Test: valhalla_route macro (requires geometry_macro.sql)
 statement ok
-CREATE OR REPLACE MACRO travel_time_route(from_geom, to_geom, costing) AS (
+CREATE OR REPLACE MACRO valhalla_route(from_geom, to_geom, costing) AS (
     SELECT struct_pack(
         distance_km := r.distance_km,
         duration_minutes := r.duration_minutes,
         geometry := ST_GeomFromWKB(r.geometry)
-    ) FROM (SELECT travel_time_route_wkb(from_geom, to_geom, costing) as r)
+    ) FROM (SELECT valhalla_route_wkb(from_geom, to_geom, costing) as r)
 );
 
 # Test: Macro returns GEOMETRY type
 query I
-SELECT typeof(travel_time_route(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').geometry);
+SELECT typeof(valhalla_route(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').geometry);
 ----
 GEOMETRY
 
 # Test: Macro geometry is a LINESTRING
 query I
-SELECT ST_GeomType(travel_time_route(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').geometry);
+SELECT ST_GeomType(valhalla_route(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').geometry);
 ----
 LINESTRING
 
 # Test: Macro has same distance as WKB version
 query I
 SELECT
-    abs(travel_time_route(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').distance_km -
-        travel_time_route_wkb(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').distance_km) < 0.01;
+    abs(valhalla_route(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').distance_km -
+        valhalla_route_wkb(ST_Point(7.4281, 43.7396), ST_Point(7.4197, 43.7312), 'auto').distance_km) < 0.01;
 ----
 true
