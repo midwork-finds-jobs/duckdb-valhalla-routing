@@ -40,6 +40,8 @@ else()
   set(USE_VALHALLA_WRAPPER FALSE)
   # Add stub sources to extension
   list(APPEND EXTENSION_SOURCES ${STUB_SOURCES})
+  # Stub is compiled into the extension: no dllimport (breaks MinGW linking)
+  add_definitions(-DVALHALLA_WRAPPER_STATIC)
 endif()
 
 # Include the wrapper header
