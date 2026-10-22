@@ -21,7 +21,7 @@ SELECT
     round(r.duration_minutes, 1) as duration_min,
     substr(r.geometry, 1, 80) || '...' as route_geometry
 FROM (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(12.4578, 43.9424),   -- San Marino (lon, lat)
         ST_Point(12.3436, 43.8967),   -- San Leo
         'auto'
@@ -38,11 +38,11 @@ SELECT
 FROM (
     -- Option 1: GEOMETRY type (recommended)
     SELECT 'GEOMETRY type' as method,
-           travel_time_route_wkb(ST_Point(12.4578, 43.9424), ST_Point(12.3436, 43.8967), 'auto') as r
+           valhalla_route_wkb(ST_Point(12.4578, 43.9424), ST_Point(12.3436, 43.8967), 'auto') as r
     UNION ALL
     -- Option 2: WKB format (explicit conversion)
     SELECT 'WKB blob',
-           travel_time_route_wkb(ST_AsWKB(ST_Point(12.4578, 43.9424)), ST_AsWKB(ST_Point(12.3436, 43.8967)), 'auto')
+           valhalla_route_wkb(ST_AsWKB(ST_Point(12.4578, 43.9424)), ST_AsWKB(ST_Point(12.3436, 43.8967)), 'auto')
 );
 
 SELECT 'Done!' as status;

@@ -24,7 +24,7 @@ SELECT
     round(r.distance_km, 1) as distance_km,
     round(r.duration_minutes, 0) as duration_min
 FROM (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(24.7536, 59.4370),  -- Tallinn (lon, lat)
         ST_Point(26.7290, 58.3780),  -- Tartu
         'auto'
@@ -40,7 +40,7 @@ SELECT
     round(r.duration_minutes, 0) as minutes,
     substr(r.geometry, 1, 80) || '...' as route_preview
 FROM (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(24.7536, 59.4370),
         ST_Point(26.7290, 58.3780),
         'auto'
@@ -59,12 +59,12 @@ WITH cities AS (
 )
 SELECT
     'Tallinn → ' || c.name as route,
-    round(travel_time_route(
+    round(valhalla_route(
         ST_Point(24.7536, 59.4370),
         ST_Point(c.lon, c.lat),
         'auto'
     ).distance_km, 1) as km,
-    round(travel_time_route(
+    round(valhalla_route(
         ST_Point(24.7536, 59.4370),
         ST_Point(c.lon, c.lat),
         'auto'
@@ -80,11 +80,11 @@ SELECT
     round(r.distance_km, 1) as km,
     round(r.duration_minutes, 0) as minutes
 FROM (
-    SELECT 'auto' as mode, travel_time_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'auto') as r
+    SELECT 'auto' as mode, valhalla_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'auto') as r
     UNION ALL
-    SELECT 'truck', travel_time_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'truck')
+    SELECT 'truck', valhalla_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'truck')
     UNION ALL
-    SELECT 'bicycle', travel_time_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'bicycle')
+    SELECT 'bicycle', valhalla_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'bicycle')
 );
 
 -- =============================================================================
@@ -95,7 +95,7 @@ SELECT
     round(r.distance_km, 1) as km,
     round(r.duration_minutes, 0) as minutes
 FROM (
-    SELECT travel_time_route_wkb(
+    SELECT valhalla_route_wkb(
         ST_Point(24.7536, 59.4370),  -- Tallinn (lon, lat)
         ST_Point(26.7290, 58.3780),  -- Tartu
         'auto'

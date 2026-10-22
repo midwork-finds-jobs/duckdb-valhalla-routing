@@ -58,10 +58,10 @@ make test
 SELECT travel_time_load_config('/path/to/valhalla.json');
 
 -- Route with GEOMETRY
-SELECT travel_time_route_wkb(ST_Point(12.45, 43.94), ST_Point(12.34, 43.89), 'auto');
+SELECT valhalla_route_wkb(ST_Point(12.45, 43.94), ST_Point(12.34, 43.89), 'auto');
 
 -- Route with WKB
-SELECT travel_time_route_wkb(ST_AsWKB(geom1), ST_AsWKB(geom2), 'auto');
+SELECT valhalla_route_wkb(ST_AsWKB(geom1), ST_AsWKB(geom2), 'auto');
 
 -- Raw JSON API
 SELECT travel_time_request('route', '{"locations":[...]}');

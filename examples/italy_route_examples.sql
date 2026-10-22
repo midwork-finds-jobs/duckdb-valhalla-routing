@@ -23,7 +23,7 @@ SELECT travel_time_load_config('./italy_tiles/valhalla.json') as loaded;
 SELECT '=== Example 1: Rome to Florence ===' as example;
 
 WITH route AS (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(12.4964, 41.9028),  -- Rome (Colosseum)
         ST_Point(11.2558, 43.7696),  -- Florence (Duomo)
         'auto'
@@ -50,24 +50,24 @@ SELECT
     round(hours, 1) as hours
 FROM (
     SELECT 'Naples' as name,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(14.2681, 40.8518), 'auto').distance_km as km,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(14.2681, 40.8518), 'auto').duration_minutes / 60.0 as hours
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(14.2681, 40.8518), 'auto').distance_km as km,
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(14.2681, 40.8518), 'auto').duration_minutes / 60.0 as hours
     UNION ALL
     SELECT 'Florence',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto').distance_km,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto').duration_minutes / 60.0
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto').distance_km,
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto').duration_minutes / 60.0
     UNION ALL
     SELECT 'Bologna',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.3426, 44.4949), 'auto').distance_km,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.3426, 44.4949), 'auto').duration_minutes / 60.0
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.3426, 44.4949), 'auto').distance_km,
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.3426, 44.4949), 'auto').duration_minutes / 60.0
     UNION ALL
     SELECT 'Venice',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(12.3155, 45.4408), 'auto').distance_km,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(12.3155, 45.4408), 'auto').duration_minutes / 60.0
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(12.3155, 45.4408), 'auto').distance_km,
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(12.3155, 45.4408), 'auto').duration_minutes / 60.0
     UNION ALL
     SELECT 'Milan',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(9.1900, 45.4642), 'auto').distance_km,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(9.1900, 45.4642), 'auto').duration_minutes / 60.0
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(9.1900, 45.4642), 'auto').distance_km,
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(9.1900, 45.4642), 'auto').duration_minutes / 60.0
 )
 ORDER BY km;
 
@@ -84,13 +84,13 @@ SELECT
     round(r.duration_minutes / 60.0, 1) as hours
 FROM (
     SELECT 'Car' as mode,
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto') as r
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'auto') as r
     UNION ALL
     SELECT 'Truck',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'truck')
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'truck')
     UNION ALL
     SELECT 'Bicycle',
-           travel_time_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'bicycle')
+           valhalla_route(ST_Point(12.4964, 41.9028), ST_Point(11.2558, 43.7696), 'bicycle')
 )
 ORDER BY hours;
 
@@ -107,13 +107,13 @@ SELECT
     round(r.duration_minutes / 60.0, 1) as hours
 FROM (
     SELECT 'Milan → Venice' as route,
-           travel_time_route(ST_Point(9.1900, 45.4642), ST_Point(12.3155, 45.4408), 'auto') as r
+           valhalla_route(ST_Point(9.1900, 45.4642), ST_Point(12.3155, 45.4408), 'auto') as r
     UNION ALL
     SELECT 'Venice → Turin',
-           travel_time_route(ST_Point(12.3155, 45.4408), ST_Point(7.6869, 45.0703), 'auto')
+           valhalla_route(ST_Point(12.3155, 45.4408), ST_Point(7.6869, 45.0703), 'auto')
     UNION ALL
     SELECT 'Turin → Milan',
-           travel_time_route(ST_Point(7.6869, 45.0703), ST_Point(9.1900, 45.4642), 'auto')
+           valhalla_route(ST_Point(7.6869, 45.0703), ST_Point(9.1900, 45.4642), 'auto')
 );
 
 SELECT '' as separator;
@@ -129,16 +129,16 @@ SELECT
     round(minutes, 0) as minutes
 FROM (
     SELECT 'Pisa' as name,
-           travel_time_route(ST_Point(11.2558, 43.7696), ST_Point(10.4016, 43.7228), 'auto').distance_km as km,
-           travel_time_route(ST_Point(11.2558, 43.7696), ST_Point(10.4016, 43.7228), 'auto').duration_minutes as minutes
+           valhalla_route(ST_Point(11.2558, 43.7696), ST_Point(10.4016, 43.7228), 'auto').distance_km as km,
+           valhalla_route(ST_Point(11.2558, 43.7696), ST_Point(10.4016, 43.7228), 'auto').duration_minutes as minutes
     UNION ALL
     SELECT 'Siena',
-           travel_time_route(ST_Point(11.2558, 43.7696), ST_Point(11.3308, 43.3188), 'auto').distance_km,
-           travel_time_route(ST_Point(11.2558, 43.7696), ST_Point(11.3308, 43.3188), 'auto').duration_minutes
+           valhalla_route(ST_Point(11.2558, 43.7696), ST_Point(11.3308, 43.3188), 'auto').distance_km,
+           valhalla_route(ST_Point(11.2558, 43.7696), ST_Point(11.3308, 43.3188), 'auto').duration_minutes
     UNION ALL
     SELECT 'Bologna',
-           travel_time_route(ST_Point(11.2558, 43.7696), ST_Point(11.3426, 44.4949), 'auto').distance_km,
-           travel_time_route(ST_Point(11.2558, 43.7696), ST_Point(11.3426, 44.4949), 'auto').duration_minutes
+           valhalla_route(ST_Point(11.2558, 43.7696), ST_Point(11.3426, 44.4949), 'auto').distance_km,
+           valhalla_route(ST_Point(11.2558, 43.7696), ST_Point(11.3426, 44.4949), 'auto').duration_minutes
 )
 ORDER BY km;
 

@@ -332,7 +332,7 @@ To use these tiles with DuckDB valhalla_routing extension:
     LOAD valhalla_routing;
     SET valhalla_tiles = '${OUTPUT_DIR}';
 
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(2.3522, 48.8566),  -- Paris
         ST_Point(13.4050, 52.5200),  -- Berlin
         'auto'

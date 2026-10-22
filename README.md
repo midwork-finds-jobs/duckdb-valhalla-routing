@@ -1,4 +1,4 @@
-# travel_time - DuckDB Routing Extension
+# valhalla_routing - DuckDB Routing Extension
 
 DuckDB extension for travel time and route calculations using [Valhalla](https://github.com/valhalla/valhalla) routing engine.
 
@@ -26,7 +26,7 @@ SELECT
     round(r.duration_minutes, 0) as duration_min,
     ST_GeomFromWKB(r.geometry) as route
 FROM (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(24.7536, 59.4370),  -- Tallinn
         ST_Point(26.7290, 58.3780),  -- Tartu
         'auto'
@@ -97,7 +97,7 @@ ls estonia_tiles/tiles/
 
 ```bash
 ./build/release/duckdb -c "
-LOAD './build/release/extension/travel_time/travel_time.duckdb_extension';
+LOAD './build/release/extension/valhalla_routing/valhalla_routing.duckdb_extension';
 INSTALL spatial; LOAD spatial;
 
 SELECT travel_time_load_config('./estonia_tiles/valhalla.json');
@@ -108,7 +108,7 @@ SELECT
     round(r.duration_minutes, 0) as minutes,
     substr(r.geometry, 1, 100) || '...' as route_preview
 FROM (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(24.7536, 59.4370),
         ST_Point(26.7290, 58.3780),
         'auto'
@@ -127,7 +127,7 @@ Load Valhalla routing tiles from a config file.
 SELECT travel_time_load_config('./estonia_tiles/valhalla.json');
 ```
 
-### `travel_time_route(from, to, costing) -> STRUCT` ⭐ Recommended
+### `valhalla_route(from, to, costing) -> STRUCT` ⭐ Recommended
 
 **Requires spatial extension and geometry macro.**
 
@@ -138,12 +138,12 @@ Calculate route between two points with GEOMETRY type output. Returns struct wit
 - `geometry` - Route path as GEOMETRY type (ready for spatial operations)
 
 ```sql
--- Load geometry macro (creates travel_time_route from travel_time_route_wkb)
+-- Load geometry macro (creates valhalla_route from valhalla_route_wkb)
 .read examples/geometry_macro.sql
 
 -- Use with GEOMETRY type (recommended)
 WITH route AS (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(12.4964, 41.9028),  -- Rome
         ST_Point(11.2558, 43.7696),  -- Florence
         'auto'
@@ -159,9 +159,9 @@ FROM route;
 
 Costing modes: `auto`, `bicycle`, `pedestrian`, `truck`, `taxi`, `bus`, `motor_scooter`
 
-### `travel_time_route_wkb(from, to, costing) -> STRUCT`
+### `valhalla_route_wkb(from, to, costing) -> STRUCT`
 
-**Lower-level function. Use `travel_time_route` instead for GEOMETRY output.**
+**Lower-level function. Use `valhalla_route` instead for GEOMETRY output.**
 
 Calculate route between two points with WKB BLOB output. Returns struct with:
 
@@ -171,17 +171,17 @@ Calculate route between two points with WKB BLOB output. Returns struct with:
 
 ```sql
 -- GEOMETRY type (spatial extension)
-SELECT travel_time_route_wkb(ST_Point(24.75, 59.43), ST_Point(26.72, 58.37), 'auto');
+SELECT valhalla_route_wkb(ST_Point(24.75, 59.43), ST_Point(26.72, 58.37), 'auto');
 
 -- WKB blobs
-SELECT travel_time_route_wkb(ST_AsWKB(origin), ST_AsWKB(dest), 'auto') FROM points;
+SELECT valhalla_route_wkb(ST_AsWKB(origin), ST_AsWKB(dest), 'auto') FROM points;
 ```
 
 **Converting WKB to GEOMETRY:**
 
 ```sql
 WITH route AS (
-    SELECT travel_time_route_wkb(
+    SELECT valhalla_route_wkb(
         ST_Point(12.4964, 41.9028),
         ST_Point(11.2558, 43.7696),
         'auto'
@@ -251,6 +251,12 @@ Check if routing tiles are loaded.
 SELECT travel_time_is_loaded();
 ```
 
+### `valhalla_build_tiles(pbf_path, output_dir) -> VARCHAR`
+
+Downloads the PBF (if remote), writes `output_dir/valhalla.json` and builds tiles in-process via Valhalla's mjolnir C++ API. Returns the config path.
+
+Only available when the extension is built against the Valhalla wrapper (see Building from Source). Builds without Valhalla (e.g. the default CI binaries) raise `valhalla_build_tiles failed: Valhalla not available`; use the `valhalla_build_tiles` CLI as shown in [Building Routing Tiles](#building-routing-tiles) instead.
+
 ## Complete Example: Estonia Routes
 
 ```sql
@@ -278,7 +284,7 @@ SELECT
     ST_GeomFromWKB(r.route.geometry) as route_geom
 FROM cities c
 CROSS JOIN LATERAL (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         (SELECT geom FROM cities WHERE name = 'Tallinn'),
         c.geom,
         'auto'
@@ -310,11 +316,11 @@ SELECT
     round(r.distance_km, 1) as km,
     round(r.duration_minutes, 0) as minutes
 FROM (
-    SELECT 'auto' as mode, travel_time_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'auto') as r
+    SELECT 'auto' as mode, valhalla_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'auto') as r
     UNION ALL
-    SELECT 'bicycle', travel_time_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'bicycle')
+    SELECT 'bicycle', valhalla_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'bicycle')
     UNION ALL
-    SELECT 'truck', travel_time_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'truck')
+    SELECT 'truck', valhalla_route(ST_Point(24.7536, 59.4370), ST_Point(26.7290, 58.3780), 'truck')
 );
 ```
 

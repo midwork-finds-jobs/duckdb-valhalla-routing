@@ -32,7 +32,7 @@ static void SetValhallaTiles(ClientContext &context, SetScope scope, Value &para
 
 	if (config_path.find(".json") == std::string::npos) {
 		// No .json extension - assume it's a directory
-		if (config_path.back() != '/') {
+		if (!config_path.empty() && config_path.back() != '/') {
 			config_path += '/';
 		}
 		config_path += "valhalla.json";
@@ -64,6 +64,8 @@ static void SetValhallaTiles(ClientContext &context, SetScope scope, Value &para
 			g_config_path = config_path;
 		}
 
+	} catch (Exception &) {
+		throw;
 	} catch (std::exception &e) {
 		throw InvalidInputException("Failed to load config from " + config_path + ": " + std::string(e.what()));
 	}

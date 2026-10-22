@@ -26,12 +26,12 @@ SET valhalla_config = 's3://my-bucket/valhalla/valhalla.json';
 
 -- Load geometry macro
 SELECT '4. Loading geometry macro...' as step;
-CREATE OR REPLACE MACRO travel_time_route(from_geom, to_geom, costing) AS (
+CREATE OR REPLACE MACRO valhalla_route(from_geom, to_geom, costing) AS (
     SELECT struct_pack(
         distance_km := r.distance_km,
         duration_minutes := r.duration_minutes,
         geometry := ST_GeomFromWKB(r.geometry)
-    ) FROM (SELECT travel_time_route_wkb(from_geom, to_geom, costing) as r)
+    ) FROM (SELECT valhalla_route_wkb(from_geom, to_geom, costing) as r)
 );
 
 SELECT '' as separator;
@@ -39,7 +39,7 @@ SELECT '' as separator;
 -- Example 1: Single route
 SELECT '=== Example 1: Rome to Florence ===' as example;
 WITH route AS (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(12.4964, 41.9028),  -- Rome
         ST_Point(11.2558, 43.7696),  -- Florence
         'auto'
@@ -74,11 +74,11 @@ SELECT 'Switch between regions by loading different S3 paths:' as info;
 
 -- Europe tiles
 -- SET valhalla_config = 's3://tiles-eu/valhalla.json';
--- SELECT * FROM travel_time_route(...);
+-- SELECT * FROM valhalla_route(...);
 
 -- US tiles
 -- SET valhalla_config = 's3://tiles-us/valhalla.json';
--- SELECT * FROM travel_time_route(...);
+-- SELECT * FROM valhalla_route(...);
 
 SELECT '' as separator;
 SELECT '✅ S3 tiles working successfully!' as status;

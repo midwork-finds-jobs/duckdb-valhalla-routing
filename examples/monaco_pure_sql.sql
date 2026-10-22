@@ -51,12 +51,12 @@ SELECT '';
 -- STEP 4: Create Helper Macro (Pure SQL)
 -- ============================================================================
 
-CREATE OR REPLACE MACRO travel_time_route(from_geom, to_geom, costing) AS (
+CREATE OR REPLACE MACRO valhalla_route(from_geom, to_geom, costing) AS (
     SELECT struct_pack(
         distance_km := r.distance_km,
         duration_minutes := r.duration_minutes,
         geometry := ST_GeomFromWKB(r.geometry)
-    ) FROM (SELECT travel_time_route_wkb(from_geom, to_geom, costing) as r)
+    ) FROM (SELECT valhalla_route_wkb(from_geom, to_geom, costing) as r)
 );
 
 -- ============================================================================
@@ -67,7 +67,7 @@ SELECT '🎰 → 🏛️  Step 5: Route Casino → Museum';
 SELECT '';
 
 WITH route AS (
-    SELECT travel_time_route(
+    SELECT valhalla_route(
         ST_Point(7.4275, 43.7397),  -- Casino de Monte-Carlo
         ST_Point(7.4254, 43.7308),  -- Musée Océanographique
         'auto'
@@ -92,7 +92,7 @@ SELECT '';
 
 COPY (
     WITH route AS (
-        SELECT travel_time_route(
+        SELECT valhalla_route(
             ST_Point(7.4275, 43.7397),
             ST_Point(7.4254, 43.7308),
             'auto'
@@ -143,7 +143,7 @@ SELECT
     round(r.distance_km, 2) as km,
     round(r.duration_minutes, 1) as min
 FROM (
-    SELECT route, travel_time_route(from_pt, to_pt, 'auto') as r
+    SELECT route, valhalla_route(from_pt, to_pt, 'auto') as r
     FROM routes
 )
 ORDER BY km;
@@ -170,7 +170,7 @@ SELECT
 FROM (
     SELECT
         mode,
-        travel_time_route(
+        valhalla_route(
             ST_Point(7.4275, 43.7397),
             ST_Point(7.4254, 43.7308),
             costing

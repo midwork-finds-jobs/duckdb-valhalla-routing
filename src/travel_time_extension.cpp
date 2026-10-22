@@ -883,10 +883,13 @@ static void LoadInternal(ExtensionLoader &loader) {
 	// travel_time_load_config
 	auto load_config_function = ScalarFunction("travel_time_load_config", {LogicalType::VARCHAR}, LogicalType::BOOLEAN,
 	                                           TravelTimeLoadConfigFun);
+	load_config_function.SetVolatile();
+	load_config_function.SetFallible();
 	loader.RegisterFunction(load_config_function);
 
 	// travel_time_is_loaded
 	auto is_loaded_function = ScalarFunction("travel_time_is_loaded", {}, LogicalType::BOOLEAN, TravelTimeIsLoadedFun);
+	is_loaded_function.SetVolatile();
 	loader.RegisterFunction(is_loaded_function);
 
 	// travel_time
@@ -894,6 +897,7 @@ static void LoadInternal(ExtensionLoader &loader) {
 	    "travel_time",
 	    {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::VARCHAR},
 	    LogicalType::DOUBLE, TravelTimeFun);
+	travel_time_function.SetFallible();
 	loader.RegisterFunction(travel_time_function);
 
 	// travel_time_route_wkb return type
@@ -909,6 +913,7 @@ static void LoadInternal(ExtensionLoader &loader) {
 	auto route_function =
 	    ScalarFunction("valhalla_route_wkb", {LogicalType::ANY, LogicalType::ANY, LogicalType::VARCHAR},
 	                   route_return_type, TravelTimeRouteUnifiedFun);
+	route_function.SetFallible();
 	loader.RegisterFunction(route_function);
 
 	// travel_time_locate
@@ -920,11 +925,13 @@ static void LoadInternal(ExtensionLoader &loader) {
 	auto locate_function =
 	    ScalarFunction("travel_time_locate", {LogicalType::DOUBLE, LogicalType::DOUBLE, LogicalType::VARCHAR},
 	                   locate_return_type, TravelTimeLocateFun);
+	locate_function.SetFallible();
 	loader.RegisterFunction(locate_function);
 
 	// travel_time_request (raw JSON API)
 	auto request_function = ScalarFunction("travel_time_request", {LogicalType::VARCHAR, LogicalType::VARCHAR},
 	                                       LogicalType::VARCHAR, TravelTimeRequestFun);
+	request_function.SetFallible();
 	loader.RegisterFunction(request_function);
 
 	// travel_time_matrix table function

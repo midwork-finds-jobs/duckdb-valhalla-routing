@@ -209,6 +209,17 @@ VALHALLA_EXPORT const char *valhalla_last_error(void);
 VALHALLA_EXPORT void valhalla_free(ValhallaRouter *router);
 
 /**
+ * Build routing tiles from an OSM PBF file using Valhalla's mjolnir C++ API.
+ * Writes a generated config (tile paths under tile_dir) to config_path first.
+ *
+ * @param tile_dir Output tile directory (must exist)
+ * @param pbf_path Local path to .osm.pbf input
+ * @param config_path Where to write the generated valhalla.json
+ * @return 0 on success, -1 on error (check valhalla_last_error)
+ */
+VALHALLA_EXPORT int valhalla_build_tiles(const char *tile_dir, const char *pbf_path, const char *config_path);
+
+/**
  * Get Valhalla version string.
  *
  * @return Version string (do not free)
