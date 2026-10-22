@@ -91,7 +91,7 @@ void RegisterValhallaTilesSetting(DatabaseInstance &instance) {
 	auto &config = DBConfig::GetConfig(instance);
 
 	config.AddExtensionOption("valhalla_tiles", "Path to Valhalla tiles directory or config file", LogicalType::VARCHAR,
-	                          Value(),          // default_value
+	                          Value(""),        // default_value: empty = not set (NULL default is not queryable)
 	                          SetValhallaTiles, // set callback
 	                          SetScope::SESSION // default scope
 	);
