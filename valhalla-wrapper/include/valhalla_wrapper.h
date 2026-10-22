@@ -12,7 +12,10 @@
 #include <stddef.h>
 
 /* Export macro for symbol visibility */
-#ifdef _WIN32
+#if defined(VALHALLA_WRAPPER_STATIC)
+/* Linked statically (e.g. stub build): no dllimport/dllexport */
+#define VALHALLA_EXPORT
+#elif defined(_WIN32)
 #ifdef VALHALLA_WRAPPER_EXPORTS
 #define VALHALLA_EXPORT __declspec(dllexport)
 #else
