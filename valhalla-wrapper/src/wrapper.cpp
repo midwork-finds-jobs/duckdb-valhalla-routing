@@ -8,6 +8,7 @@
 #include "valhalla_wrapper.h"
 
 #include <valhalla/tyr/actor.h>
+#include <valhalla/mjolnir/util.h>
 #include <valhalla/baldr/rapidjson_utils.h>
 #include <valhalla/midgard/encoded.h>
 #include <valhalla/midgard/pointll.h>
@@ -475,6 +476,226 @@ void valhalla_free(ValhallaRouter *router) {
 const char *valhalla_version(void) {
 	// TODO: Get actual Valhalla version
 	return "valhalla-wrapper 1.0";
+}
+
+// Base tile-build config (based on valhalla_build_config output). Path entries are filled in by
+// valhalla_build_tiles() through the ptree API so user-supplied paths are always properly escaped.
+static const char *kBaseBuildConfig = R"json({
+ "additional_data": {
+  "elevation": ""
+ },
+ "httpd": {
+  "service": {
+   "listen": "tcp://*:8002",
+   "loopback": "ipc:///tmp/loopback"
+  }
+ },
+ "loki": {
+  "actions": [
+   "locate",
+   "route",
+   "height",
+   "sources_to_targets",
+   "optimized_route",
+   "isochrone",
+   "trace_route",
+   "trace_attributes",
+   "transit_available",
+   "expansion",
+   "centroid",
+   "status"
+  ],
+  "logging": {
+   "type": "std_out",
+   "color": true
+  },
+  "service": {
+   "proxy": "ipc:///tmp/loki"
+  },
+  "service_defaults": {
+   "heading_tolerance": 60,
+   "min_zoom_road_class": [
+    7,
+    7,
+    8,
+    10,
+    11,
+    11,
+    13,
+    14
+   ],
+   "minimum_reachability": 50,
+   "node_snap_tolerance": 5,
+   "radius": 0,
+   "search_cutoff": 35000,
+   "street_side_max_distance": 1000,
+   "street_side_tolerance": 5
+  },
+  "use_connectivity": true
+ },
+ "meili": {
+  "auto": {
+   "search_radius": 50,
+   "turn_penalty_factor": 200
+  },
+  "default": {
+   "beta": 3,
+   "breakage_distance": 2000,
+   "geometry": false,
+   "gps_accuracy": 5.0,
+   "interpolation_distance": 10,
+   "max_route_distance_factor": 5,
+   "max_search_radius": 100,
+   "search_radius": 50,
+   "sigma_z": 4.07
+  },
+  "grid": {
+   "cache_size": 100240,
+   "size": 500
+  },
+  "logging": {
+   "type": "std_out",
+   "color": true
+  },
+  "mode": "auto",
+  "service": {
+   "proxy": "ipc:///tmp/meili"
+  }
+ },
+ "mjolnir": {
+  "tile_dir": "",
+  "tile_extract": "",
+  "admin": "",
+  "timezone": "",
+  "traffic_extract": "",
+  "max_cache_size": 1000000000,
+  "id_table_size": 1300000000,
+  "hierarchy": true,
+  "shortcuts": true,
+  "include_driving": true,
+  "include_bicycle": true,
+  "include_pedestrian": true,
+  "data_processing": {
+   "infer_internal_intersections": true,
+   "infer_turn_channels": true,
+   "apply_country_overrides": true,
+   "use_admin_db": true
+  },
+  "logging": {
+   "type": "std_out",
+   "color": true
+  }
+ },
+ "odin": {
+  "logging": {
+   "type": "std_out",
+   "color": true
+  },
+  "markup_formatter": {
+   "markup_enabled": false
+  },
+  "service": {
+   "proxy": "ipc:///tmp/odin"
+  }
+ },
+ "service_limits": {
+  "allow_hard_exclusions": false,
+  "auto": {
+   "max_distance": 5000000.0,
+   "max_locations": 20,
+   "max_matrix_distance": 400000.0,
+   "max_matrix_location_pairs": 2500
+  },
+  "bicycle": {
+   "max_distance": 500000.0,
+   "max_locations": 50,
+   "max_matrix_distance": 200000.0,
+   "max_matrix_location_pairs": 2500
+  },
+  "pedestrian": {
+   "max_distance": 250000.0,
+   "max_locations": 50,
+   "max_matrix_distance": 200000.0,
+   "max_matrix_location_pairs": 2500,
+   "max_transit_walking_distance": 10000,
+   "min_transit_walking_distance": 1
+  },
+  "isochrone": {
+   "max_contours": 4,
+   "max_distance": 25000.0,
+   "max_distance_contour": 200,
+   "max_locations": 1,
+   "max_time_contour": 120
+  },
+  "status": {
+   "allow_verbose": false
+  },
+  "trace": {
+   "max_alternates": 3,
+   "max_alternates_shape": 100,
+   "max_distance": 200000.0,
+   "max_gps_accuracy": 100.0,
+   "max_search_radius": 100.0,
+   "max_shape": 16000
+  },
+  "skadi": {
+   "max_shape": 750000,
+   "min_resample": 10.0
+  },
+  "max_alternates": 2,
+  "max_distance_disable_hierarchy_culling": 0,
+  "max_exclude_locations": 50,
+  "max_exclude_polygons_length": 10000,
+  "max_linear_cost_edges": 50000,
+  "max_radius": 200,
+  "max_reachability": 100,
+  "max_timedep_distance": 500000,
+  "max_timedep_distance_matrix": 0,
+  "min_linear_cost_factor": 1
+ },
+ "statsd": {
+  "port": 8125,
+  "prefix": "valhalla"
+ },
+ "thor": {
+  "logging": {
+   "type": "std_out",
+   "color": true,
+   "long_request": 110.0
+  },
+  "service": {
+   "proxy": "ipc:///tmp/thor"
+  },
+  "source_to_target_algorithm": "select_optimal"
+ }
+})json";
+
+int valhalla_build_tiles(const char *tile_dir, const char *pbf_path, const char *config_path) {
+	if (!tile_dir || !pbf_path || !config_path) {
+		return set_error("valhalla_build_tiles: NULL argument");
+	}
+	try {
+		boost::property_tree::ptree config;
+		std::istringstream base(kBaseBuildConfig);
+		boost::property_tree::read_json(base, config);
+
+		const std::string dir(tile_dir);
+		config.put("additional_data.elevation", dir + "/elevation/");
+		config.put("mjolnir.tile_dir", dir);
+		config.put("mjolnir.tile_extract", dir + "/tiles.tar");
+		config.put("mjolnir.admin", dir + "/admin.sqlite");
+		config.put("mjolnir.timezone", dir + "/tz_world.sqlite");
+		config.put("mjolnir.traffic_extract", dir + "/traffic.tar");
+
+		boost::property_tree::write_json(std::string(config_path), config);
+
+		if (!valhalla::mjolnir::build_tile_set(config, {std::string(pbf_path)})) {
+			return set_error("valhalla mjolnir build_tile_set failed");
+		}
+		return 0;
+	} catch (const std::exception &e) {
+		return set_error(std::string("valhalla_build_tiles: ") + e.what());
+	}
 }
 
 } // extern "C"

@@ -1,10 +1,10 @@
--- Macro: travel_time_route
+-- Macro: valhalla_route
 -- Automatically converts WKB BLOB geometry to GEOMETRY type
 --
--- This is the recommended routing function. It wraps travel_time_route_wkb()
+-- This is the recommended routing function. It wraps valhalla_route_wkb()
 -- and returns the geometry field as GEOMETRY type instead of BLOB.
 --
--- For direct WKB output (no spatial extension needed), use travel_time_route_wkb()
+-- For direct WKB output (no spatial extension needed), use valhalla_route_wkb()
 --
 -- Prerequisites:
 --   INSTALL spatial;
@@ -14,7 +14,7 @@
 --   .read examples/geometry_macro.sql
 --
 --   WITH route AS (
---       SELECT travel_time_route(
+--       SELECT valhalla_route(
 --           ST_Point(12.4964, 41.9028),  -- Rome
 --           ST_Point(11.2558, 43.7696),  -- Florence
 --           'auto'
@@ -27,10 +27,10 @@
 --       ST_NPoints(r.geometry) as num_points
 --   FROM route;
 
-CREATE OR REPLACE MACRO travel_time_route(from_geom, to_geom, costing) AS (
+CREATE OR REPLACE MACRO valhalla_route(from_geom, to_geom, costing) AS (
     SELECT struct_pack(
         distance_km := r.distance_km,
         duration_minutes := r.duration_minutes,
         geometry := ST_GeomFromWKB(r.geometry)
-    ) FROM (SELECT travel_time_route_wkb(from_geom, to_geom, costing) as r)
+    ) FROM (SELECT valhalla_route_wkb(from_geom, to_geom, costing) as r)
 );

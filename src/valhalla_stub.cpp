@@ -126,4 +126,11 @@ const char *valhalla_version(void) {
 	return "stub-no-valhalla";
 }
 
+int valhalla_build_tiles(const char *tile_dir, const char *pbf_path, const char *config_path) {
+	(void)tile_dir;
+	(void)pbf_path;
+	(void)config_path;
+	return -1;
+}
+
 } // extern "C"
