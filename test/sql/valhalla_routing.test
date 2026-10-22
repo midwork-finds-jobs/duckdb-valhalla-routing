@@ -23,6 +23,11 @@ SELECT travel_time_is_loaded();
 ----
 false
 
+query I
+SELECT current_setting('valhalla_tiles');
+----
+(empty)
+
 # Routing without a loaded router errors
 statement error
 SELECT travel_time(43.7396, 7.4281, 43.7312, 7.4197, 'auto');
